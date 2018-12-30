@@ -76,7 +76,7 @@ class Spectra(object):
                       Default is gas_properties.GasProperties which reads both of these from the particle output.
             gasprop_args - Dictionary of extra arguments to be fed to gasprop, if gasprop is not the default.
     """
-    def __init__(self,num, base,cofm, axis, res=1., cdir=None, savefile="spectra.hdf5", savedir=None, reload_file=False, snr = 0., spec_res = 0,load_halo=False, units=None, sf_neutral=True,quiet=False, load_snapshot=True, gasprop=None, gasprop_args=None):
+    def __init__(self,num, base,cofm, axis, res=1., cdir=None, savefile="spectra.hdf5", savedir=None, reload_file=False, snr = 0., spec_res = 0,load_halo=False, units=None, sf_neutral=True,quiet=False, load_snapshot=True, gasprop=None, gasprop_args=None,Tscale=1):
         #Present for compatibility. Functionality moved to HaloAssignedSpectra
         _= load_halo
         self.num = num
@@ -112,9 +112,11 @@ class Spectra(object):
         #Stopping criterion for optical depth: if a particle is adding less
         #than this to a pixel, stop the integration.
         self.tautail = 1e-7
+        ## Temperature rescaling hack
+        self.Tscale=Tscale
         try:
             if load_snapshot:
-                self.snapshot_set = absn.AbstractSnapshotFactory(num, base)
+                self.snapshot_set = absn.AbstractSnapshotFactory(num, base, self.Tscale)
         except IOError:
             pass
         if savedir is None:
