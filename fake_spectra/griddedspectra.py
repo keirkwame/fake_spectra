@@ -18,7 +18,7 @@ class GriddedSpectra(spectra.Spectra):
         axis = np.ones(self.NumLos)
         # get position of skewers (on a regular grid)
         cofm = self.get_cofm()
-        spectra.Spectra.__init__(self,num, base, cofm=cofm, axis=axis, res=res, savefile=savefile, reload_file=reload_file, Tscale=Tscale   , **kwargs)
+        spectra.Spectra.__init__(self,num, base, cofm=cofm, axis=axis, res=res, savefile=savefile, reload_file=reload_file, Tscale=Tscale, **kwargs)
 
     def get_cofm(self, num = None):
         """Find a bunch more sightlines: should be overriden by child classes"""

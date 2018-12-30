@@ -189,13 +189,13 @@ class HDF5Snapshot(AbstractSnapshot):
         if self._handle_num != segment:
             ## Temperature rescaling hack
             if blockname=="InternalEnergy":
-                ## Rescale IE for temperature
-                print("Rescaling IE")
+                ## Rescale IE for temperature rescaling hack
                 ie=np.array(self._f_handle["PartType"+str(part_type)][blockname])
-                ie*=Tscale
-                return np.array(self._f_handle["PartType"+str(part_type)][blockname])
+                if self.Tscale!=1:
+                    print("Rescaling temperature by %.1f" % self.Tscale)
+                ie*=self.Tscale
+                return ie
             else:
-                print("Doing other stuff")
                 self._f_handle.close()
                 self._f_handle = h5py.File(self._files[segment],'r')
                 self._handle_num = segment
@@ -288,11 +288,7 @@ class BigFileSnapshot(AbstractSnapshot):
         """Get the data for a particular block, specified
         using either the BigFile names or the HDF5 names.
         Segment: which data segment to load."""
-
-        ## Need to edit this as well for temperature hack?
-        ## Previous edit only applies to hdf5 snapshots..
-
-        ## What does this line do?
+        
         if blockname in self.hdf_to_bigfile_map.keys():
             blockname = self.hdf_to_bigfile_map[blockname]
         try:
