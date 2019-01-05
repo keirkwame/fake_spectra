@@ -46,7 +46,7 @@ def fit_temp_dens_relation(logoverden, logT):
         print(res[3])
     return 10**params[0], params[1] + 1
 
-def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True):
+def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1):
     """Make a temperature density plot of neutral hydrogen or gas.
     Also fit a temperature-density relation for the total gas (not HI).
     Arguments:
@@ -57,7 +57,7 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True):
         nhi - if True, plot neutral hydrogen, otherwise plot total gas density
         plot - if True, make a plot, otherwise just do the fit
     """
-    snap = absn.AbstractSnapshotFactory(num, base)
+    snap = absn.AbstractSnapshotFactory(num, base, Tscale)
 
     redshift = 1./snap.get_header_attr("Time") - 1
     hubble = snap.get_header_attr("HubbleParam")
