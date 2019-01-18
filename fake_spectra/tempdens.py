@@ -5,12 +5,12 @@ Main function is fit_td_rel_plot()"""
 
 import numpy as np
 from scipy.optimize import leastsq
-import matplotlib
+#import matplotlib
 from . import abstractsnapshot as absn
 from . import unitsystem as units
 from .gas_properties import GasProperties
 from .ratenetworkspectra import RateNetworkGas
-matplotlib.use("PDF")
+#matplotlib.use("PDF")
 import matplotlib.pyplot as plt
 
 def mean_density(hub, redshift, omegab=0.0465):
@@ -39,7 +39,6 @@ def fit_temp_dens_relation(logoverden, logT):
         gammam1 = param[1]
         #print(param)
         return logtfor - (logT0 + gammam1 * logofor)
-
     res = leastsq(min_func, np.array([np.log10(1e4), 0.5]), full_output=True)
     params = res[0]
     if res[-1] <= 0:

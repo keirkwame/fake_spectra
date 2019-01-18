@@ -192,7 +192,7 @@ class HDF5Snapshot(AbstractSnapshot):
                 ## Rescale IE for temperature rescaling hack
                 ie=np.array(self._f_handle["PartType"+str(part_type)][blockname])
                 if self.Tscale!=1:
-                    print("Rescaling temperature by %.1f" % self.Tscale)
+                    print("Rescaling temperature by: ", self.Tscale)
                 ie*=self.Tscale
                 return ie
             else:
@@ -297,7 +297,7 @@ class BigFileSnapshot(AbstractSnapshot):
                 (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
                 ie=np.array(self._f_handle[str(part_type)+"/"+blockname][start:end])
                 if self.Tscale!=1:
-                    print("Rescaling temperature by %.1f" % self.Tscale)
+                    print("Rescaling temperature by: ", self.Tscale)
                 ie*=self.Tscale
                 return ie
             else:
