@@ -9,7 +9,7 @@ from scipy.optimize import leastsq
 from . import abstractsnapshot as absn
 from . import unitsystem as units
 from .gas_properties import GasProperties
-from .ratenetworkspectra import RateNetworkGas
+#from .ratenetworkspectra import RateNetworkGas
 #matplotlib.use("PDF")
 import matplotlib.pyplot as plt
 
@@ -45,7 +45,7 @@ def fit_temp_dens_relation(logoverden, logT):
         print(res[3])
     return 10**params[0], params[1] + 1
 
-def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1):
+def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1, gammascale=1):
     """Make a temperature density plot of neutral hydrogen or gas.
     Also fit a temperature-density relation for the total gas (not HI).
     Arguments:
@@ -56,7 +56,7 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
         nhi - if True, plot neutral hydrogen, otherwise plot total gas density
         plot - if True, make a plot, otherwise just do the fit
     """
-    snap = absn.AbstractSnapshotFactory(num, base, Tscale)
+    snap = absn.AbstractSnapshotFactory(num, base, Tscale, gammascale)
 
     redshift = 1./snap.get_header_attr("Time") - 1
     hubble = snap.get_header_attr("HubbleParam")
@@ -74,7 +74,7 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
     mean_dens = mean_density(hubble, redshift, omegab=snap.get_omega_baryon())
     (T0, gamma) = fit_temp_dens_relation(logdens - np.log10(mean_dens), logT)
     print("z=%f T0(K) = %f, gamma = %g" % (redshift, T0, gamma))
-
+    del snap
     if plot:
         if nhi:
             nhi = rates.get_reproc_HI(0, -1)

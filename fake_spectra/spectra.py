@@ -25,6 +25,7 @@ import shutil
 import numpy as np
 import h5py
 
+from . import tempdens as td
 from . import abstractsnapshot as absn
 from . import gas_properties
 from . import line_data
@@ -76,7 +77,7 @@ class Spectra(object):
                       Default is gas_properties.GasProperties which reads both of these from the particle output.
             gasprop_args - Dictionary of extra arguments to be fed to gasprop, if gasprop is not the default.
     """
-    def __init__(self,num, base,cofm, axis, res=1., cdir=None, savefile="spectra.hdf5", savedir=None, reload_file=False, snr = 0., spec_res = 0,load_halo=False, units=None, sf_neutral=True,quiet=False, load_snapshot=True, gasprop=None, gasprop_args=None,Tscale=1):
+    def __init__(self,num, base,cofm, axis, res=1., cdir=None, savefile="spectra.hdf5", savedir=None, reload_file=False, snr = 0., spec_res = 0,load_halo=False, units=None, sf_neutral=True,quiet=False, load_snapshot=True, gasprop=None, gasprop_args=None,set_T0=None,set_gamma=None):
         #Present for compatibility. Functionality moved to HaloAssignedSpectra
         _= load_halo
         self.num = num
@@ -112,11 +113,42 @@ class Spectra(object):
         #Stopping criterion for optical depth: if a particle is adding less
         #than this to a pixel, stop the integration.
         self.tautail = 1e-7
-        ## Temperature rescaling hack
-        self.Tscale=Tscale
+        ## Temperature rescaling - calculate Tscale and gammascale factors to pass rescale internal energies by
+        self.set_T0=set_T0
+        self.set_gamma=set_gamma
+        if (self.set_T0 != None) and (self.set_gamma != None):
+            print("Rescaling T0 and gamma")
+            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+            self.Tscale=self.set_T0/T_sim
+            self.gammascale=self.set_gamma/gamma_sim
+            print("Rescaling T_0 by ", self.Tscale)
+            print("Rescaling gamma by ", self.gammascale)
+            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+            if abs(self.Tscale-1)>0.2:
+                print("Warning! Rescaling temperatures by more than 20%")
+            print("T0 and gamma desired are: ", self.set_T0, " ", self.set_gamma)
+            print("After rescaling: ", Tnow, " ", gammanow )
+        elif self.set_T0 != None:
+            print("Rescaling only T0")
+            self.gammascale=1
+            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+            self.Tscale=self.set_T0/T_sim
+            print("Rescaling T_0 by ", self.Tscale)
+            if abs(self.Tscale-1)>0.2:
+                print("Warning! Rescaling temperatures by more than 20%")
+        elif self.set_gamma != None:
+            ## Do some gamma rescaling
+            print("Rescaling only gamma")
+            self.Tscale=1
+            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+        else:
+            self.Tscale=1
+            self.gammascale=1
+
         try:
             if load_snapshot:
-                self.snapshot_set = absn.AbstractSnapshotFactory(num, base, self.Tscale)
+                print("Checking tscale=", self.Tscale)
+                self.snapshot_set = absn.AbstractSnapshotFactory(num, base, self.Tscale, self.gammascale)
         except IOError:
             pass
         if savedir is None:

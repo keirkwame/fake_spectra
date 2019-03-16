@@ -13,16 +13,16 @@ try:
 except ImportError:
     bigfile = False
 
-def AbstractSnapshotFactory(num, base, Tscale):
+def AbstractSnapshotFactory(num, base, Tscale, gammascale):
     """Function to get a snapshot in whichever format is present"""
     #First try to open it as an HDF5 snapshot
     try:
-        return HDF5Snapshot(num, base, Tscale)
+        return HDF5Snapshot(num, base, Tscale, gammascale)
     except IOError:
         if bigfile is False:
             raise IOError("Not an HDF5 snapshot: ", base)
         try:
-            return BigFileSnapshot(num, base, Tscale)
+            return BigFileSnapshot(num, base, Tscale, gammascale)
         except (IOError,bigfile.BigFileError):
             raise IOError("Not a bigfile or HDF5 snapshot: ",base)
 
@@ -144,12 +144,13 @@ class AbstractSnapshot(object):
 
 class HDF5Snapshot(AbstractSnapshot):
     """Specialised class for loading HDF5 snapshots"""
-    def __init__(self, num, base, Tscale):
+    def __init__(self, num, base, Tscale, gammascale):
         self._files = sorted(self._get_all_files(num, base))
         self._files.reverse()
         self._f_handle = h5py.File(self._files[0], 'r')
         self._handle_num = 0
         self.Tscale=Tscale
+        self.gammascale=gammascale
         AbstractSnapshot.__init__(self)
 
     def _get_all_files(self, num, base):
@@ -194,6 +195,8 @@ class HDF5Snapshot(AbstractSnapshot):
                 if self.Tscale!=1:
                     print("Rescaling temperature by: ", self.Tscale)
                 ie*=self.Tscale
+                if self.gammascale!=1:
+                    print("gamma rescaling not implemented for hdf5 snapshots!")
                 return ie
             else:
                 self._f_handle.close()
@@ -271,11 +274,12 @@ class HDF5Snapshot(AbstractSnapshot):
 
 class BigFileSnapshot(AbstractSnapshot):
     """Specialised class for loading HDF5 snapshots"""
-    def __init__(self, num, base, Tscale):
+    def __init__(self, num, base, Tscale, gammascale):
         fname = base
         snap=str(num).rjust(3,'0')
         new_fname = os.path.join(base, "PART_"+snap)
         self.Tscale=Tscale
+        self.gammascale=gammascale
         #Check for snapshot directory
         if os.path.exists(new_fname):
             fname = new_fname
@@ -297,8 +301,11 @@ class BigFileSnapshot(AbstractSnapshot):
                 (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
                 ie=np.array(self._f_handle[str(part_type)+"/"+blockname][start:end])
                 if self.Tscale!=1:
-                    print("Rescaling temperature by: ", self.Tscale)
-                ie*=self.Tscale
+                    ie*=self.Tscale
+                if self.gammascale!=1:
+                    dens=self.get_data(0, "Density", segment)
+                    meanDens=self.get_omega_baryon()*27.75e-9
+                    ie*=(dens/meanDens)**(self.gammascale-1)
                 return ie
             else:
                 (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
