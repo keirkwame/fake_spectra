@@ -126,28 +126,33 @@ class Spectra(object):
             Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
             if abs(self.Tscale-1)>0.2:
                 print("Warning! Rescaling temperatures by more than 20%")
-            print("T0 and gamma desired are: ", self.set_T0, " ", self.set_gamma)
-            print("After rescaling: ", Tnow, " ", gammanow )
+            print("Desired parameters: T0=", self.set_T0, " , gamma= ", self.set_gamma)
+            print("After rescaling: T0=", Tnow, " ,gamma=", gammanow)
         elif self.set_T0 != None:
-            print("Rescaling only T0")
             self.gammascale=1
             T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
             self.Tscale=self.set_T0/T_sim
             print("Rescaling T_0 by ", self.Tscale)
             if abs(self.Tscale-1)>0.2:
                 print("Warning! Rescaling temperatures by more than 20%")
+            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+            print("Desired T0=", self.set_T0)
+            print("After rescaling: T0=", Tnow)
         elif self.set_gamma != None:
             ## Do some gamma rescaling
-            print("Rescaling only gamma")
             self.Tscale=1
             T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+            self.gammascale=self.set_gamma/gamma_sim
+            print("Rescaling gamma by ", self.gammascale)
+            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+            print("Desired gamma =", self.set_gamma)
+            print("After rescaling: gamma=", gammanow)
         else:
             self.Tscale=1
             self.gammascale=1
 
         try:
             if load_snapshot:
-                print("Checking tscale=", self.Tscale)
                 self.snapshot_set = absn.AbstractSnapshotFactory(num, base, self.Tscale, self.gammascale)
         except IOError:
             pass

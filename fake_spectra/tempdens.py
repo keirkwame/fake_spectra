@@ -46,7 +46,7 @@ def fit_temp_dens_relation(logoverden, logT):
         print(res[3])
     return 10**params[0], params[1] + 1
 
-def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1, gammascale=1):
+def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1, gammascale=1,printOutput=False):
     """Make a temperature density plot of neutral hydrogen or gas.
     Also fit a temperature-density relation for the total gas (not HI).
     Arguments:
@@ -74,7 +74,8 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
     logT = np.log10(temp)
     mean_dens = mean_density(hubble, redshift, omegab=snap.get_omega_baryon())
     (T0, gamma) = fit_temp_dens_relation(logdens - np.log10(mean_dens), logT)
-    print("z=%f T0(K) = %f, gamma = %g" % (redshift, T0, gamma))
+    if printOutput==True:
+        print("z=%f T0(K) = %f, gamma = %g" % (redshift, T0, gamma))
     del snap
     if plot:
         if nhi:
