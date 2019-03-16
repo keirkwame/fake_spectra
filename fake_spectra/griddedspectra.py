@@ -8,17 +8,18 @@ from . import spectra
 
 class GriddedSpectra(spectra.Spectra):
     """Generate metal line spectra from simulation snapshot. Default parameters are BOSS DR9"""
-    def __init__(self,num, base, nspec=200, res = 90., savefile="gridded_spectra.hdf5", reload_file=True, **kwargs):
-        # get box size from file (either HDF5 or BigFile)
-        f = absn.AbstractSnapshotFactory(num, base)
-        self.box = f.get_header_attr("BoxSize")
-        del f
+    def __init__(self,num, base, nspec=200, res = 90., savefile="gridded_spectra.hdf5", reload_file=True, set_T0=None, set_gamma=None, **kwargs):
+        # get box size from file (either HDF5 or BigFile
+        #f = absn.AbstractSnapshotFactory(num, base, Tscale=1, gammascale=1)
+        #self.box = f.get_header_attr("BoxSize")
+        self.box=60000.0
+        #del f
         self.NumLos = nspec*nspec
         #All through y axis
         axis = np.ones(self.NumLos)
         # get position of skewers (on a regular grid)
         cofm = self.get_cofm()
-        spectra.Spectra.__init__(self,num, base, cofm=cofm, axis=axis, res=res, savefile=savefile, reload_file=reload_file, **kwargs)
+        spectra.Spectra.__init__(self,num, base, cofm=cofm, axis=axis, res=res, savefile=savefile, reload_file=reload_file, set_T0=set_T0, set_gamma=set_gamma, **kwargs)
 
     def get_cofm(self, num = None):
         """Find a bunch more sightlines: should be overriden by child classes"""

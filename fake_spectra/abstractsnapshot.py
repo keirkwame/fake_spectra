@@ -13,16 +13,16 @@ try:
 except ImportError:
     bigfile = False
 
-def AbstractSnapshotFactory(num, base):
+def AbstractSnapshotFactory(num, base, Tscale, gammascale):
     """Function to get a snapshot in whichever format is present"""
     #First try to open it as an HDF5 snapshot
     try:
-        return HDF5Snapshot(num, base)
+        return HDF5Snapshot(num, base, Tscale, gammascale)
     except IOError:
         if bigfile is False:
             raise IOError("Not an HDF5 snapshot: ", base)
         try:
-            return BigFileSnapshot(num, base)
+            return BigFileSnapshot(num, base, Tscale, gammascale)
         except (IOError,bigfile.BigFileError):
             raise IOError("Not a bigfile or HDF5 snapshot: ",base)
 
@@ -144,11 +144,13 @@ class AbstractSnapshot(object):
 
 class HDF5Snapshot(AbstractSnapshot):
     """Specialised class for loading HDF5 snapshots"""
-    def __init__(self, num, base):
+    def __init__(self, num, base, Tscale, gammascale):
         self._files = sorted(self._get_all_files(num, base))
         self._files.reverse()
         self._f_handle = h5py.File(self._files[0], 'r')
         self._handle_num = 0
+        self.Tscale=Tscale
+        self.gammascale=gammascale
         AbstractSnapshot.__init__(self)
 
     def _get_all_files(self, num, base):
@@ -176,6 +178,7 @@ class HDF5Snapshot(AbstractSnapshot):
     def get_data(self, part_type, blockname, segment):
         """Get the data for a particular particle type.
            Segment: which file to load from."""
+        print("Is there anybody out there")
         if blockname in self.bigfile_to_hdf_map.keys():
             blockname = self.bigfile_to_hdf_map[blockname]
         if segment < 0:
@@ -185,10 +188,21 @@ class HDF5Snapshot(AbstractSnapshot):
                 return np.array(fhandle["PartType"+str(part_type)][blockname])
             return np.concatenate([_getone(ff) for ff in self._files])
         if self._handle_num != segment:
-            self._f_handle.close()
-            self._f_handle = h5py.File(self._files[segment],'r')
-            self._handle_num = segment
-        return np.array(self._f_handle["PartType"+str(part_type)][blockname])
+            ## Temperature rescaling hack
+            if blockname=="InternalEnergy":
+                ## Rescale IE for temperature rescaling hack
+                ie=np.array(self._f_handle["PartType"+str(part_type)][blockname])
+                if self.Tscale!=1:
+                    print("Rescaling temperature by: ", self.Tscale)
+                ie*=self.Tscale
+                if self.gammascale!=1:
+                    print("gamma rescaling not implemented for hdf5 snapshots!")
+                return ie
+            else:
+                self._f_handle.close()
+                self._f_handle = h5py.File(self._files[segment],'r')
+                self._handle_num = segment
+                return np.array(self._f_handle["PartType"+str(part_type)][blockname])
 
     def get_npart(self):
         """Get the total number of particles in the snapshot."""
@@ -260,10 +274,12 @@ class HDF5Snapshot(AbstractSnapshot):
 
 class BigFileSnapshot(AbstractSnapshot):
     """Specialised class for loading HDF5 snapshots"""
-    def __init__(self, num, base):
+    def __init__(self, num, base, Tscale, gammascale):
         fname = base
         snap=str(num).rjust(3,'0')
         new_fname = os.path.join(base, "PART_"+snap)
+        self.Tscale=Tscale
+        self.gammascale=gammascale
         #Check for snapshot directory
         if os.path.exists(new_fname):
             fname = new_fname
@@ -276,11 +292,24 @@ class BigFileSnapshot(AbstractSnapshot):
         """Get the data for a particular block, specified
         using either the BigFile names or the HDF5 names.
         Segment: which data segment to load."""
+        
         if blockname in self.hdf_to_bigfile_map.keys():
             blockname = self.hdf_to_bigfile_map[blockname]
         try:
-            (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
-            return self._f_handle[str(part_type)+"/"+blockname][start:end]
+            ## Temperature rescaling hack
+            if blockname=="InternalEnergy":
+                (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
+                ie=np.array(self._f_handle[str(part_type)+"/"+blockname][start:end])
+                if self.Tscale!=1:
+                    ie*=self.Tscale
+                if self.gammascale!=1:
+                    dens=self.get_data(0, "Density", segment)
+                    meanDens=self.get_omega_baryon()*27.75e-9
+                    ie*=(dens/meanDens)**(self.gammascale-1)
+                return ie
+            else:
+                (start, end) = self._segment_to_partlist(part_type = part_type, segment=segment)
+                return self._f_handle[str(part_type)+"/"+blockname][start:end]
         except bigfile.BigFileError:
             raise KeyError("Not found:"+str(part_type)+"/"+blockname)
 

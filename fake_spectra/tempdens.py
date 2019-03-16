@@ -5,12 +5,12 @@ Main function is fit_td_rel_plot()"""
 
 import numpy as np
 from scipy.optimize import leastsq
-import matplotlib
+#import matplotlib
 from . import abstractsnapshot as absn
 from . import unitsystem as units
 from .gas_properties import GasProperties
-from .ratenetworkspectra import RateNetworkGas
-matplotlib.use("PDF")
+#from .ratenetworkspectra import RateNetworkGas
+#matplotlib.use("PDF")
 import matplotlib.pyplot as plt
 
 def mean_density(hub, redshift, omegab=0.0465):
@@ -28,7 +28,8 @@ def mean_density(hub, redshift, omegab=0.0465):
 
 def fit_temp_dens_relation(logoverden, logT):
     """Fit a temperature density relation."""
-    ind = np.where((0 < logoverden) * (logoverden <  1.0) * (0.1 < logT) * (logT < 5.0))
+    
+    ind = np.where((0.1 < logoverden) * (logoverden <  1.0) * (0.1 < logT) * (logT < 5.0))
 
     logofor = logoverden[ind]
     logtfor = logT[ind]
@@ -39,14 +40,13 @@ def fit_temp_dens_relation(logoverden, logT):
         gammam1 = param[1]
         #print(param)
         return logtfor - (logT0 + gammam1 * logofor)
-
     res = leastsq(min_func, np.array([np.log10(1e4), 0.5]), full_output=True)
     params = res[0]
     if res[-1] <= 0:
         print(res[3])
     return 10**params[0], params[1] + 1
 
-def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True):
+def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1, gammascale=1):
     """Make a temperature density plot of neutral hydrogen or gas.
     Also fit a temperature-density relation for the total gas (not HI).
     Arguments:
@@ -57,7 +57,7 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True):
         nhi - if True, plot neutral hydrogen, otherwise plot total gas density
         plot - if True, make a plot, otherwise just do the fit
     """
-    snap = absn.AbstractSnapshotFactory(num, base)
+    snap = absn.AbstractSnapshotFactory(num, base, Tscale, gammascale)
 
     redshift = 1./snap.get_header_attr("Time") - 1
     hubble = snap.get_header_attr("HubbleParam")
@@ -75,7 +75,7 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True):
     mean_dens = mean_density(hubble, redshift, omegab=snap.get_omega_baryon())
     (T0, gamma) = fit_temp_dens_relation(logdens - np.log10(mean_dens), logT)
     print("z=%f T0(K) = %f, gamma = %g" % (redshift, T0, gamma))
-
+    del snap
     if plot:
         if nhi:
             nhi = rates.get_reproc_HI(0, -1)
