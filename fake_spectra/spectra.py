@@ -118,24 +118,24 @@ class Spectra(object):
         self.set_gamma=set_gamma
         if (self.set_T0 != None) and (self.set_gamma != None):
             print("Rescaling T0 and gamma")
-            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+            T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
             self.Tscale=self.set_T0/T_sim
             self.gammascale=self.set_gamma/gamma_sim
             print("Rescaling T_0 by ", self.Tscale)
             print("Rescaling gamma by ", self.gammascale)
-            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+            Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
             if abs(self.Tscale-1)>0.2:
                 print("Warning! Rescaling temperatures by more than 20%")
             print("Desired parameters: T0=", self.set_T0, " , gamma= ", self.set_gamma)
             print("After rescaling: T0=", Tnow, " ,gamma=", gammanow)
         elif self.set_T0 != None:
             self.gammascale=1
-            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+            T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
             self.Tscale=self.set_T0/T_sim
             print("Rescaling T_0 by ", self.Tscale)
             if abs(self.Tscale-1)>0.2:
                 print("Warning! Rescaling temperatures by more than 20%")
-            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+            Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
             print("Desired T0=", self.set_T0)
             print("After rescaling: T0=", Tnow)
         elif self.set_gamma != None:
