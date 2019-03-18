@@ -9,9 +9,9 @@ from . import spectra
 
 class RandSpectra(spectra.Spectra):
     """Generate metal line spectra from simulation snapshot"""
-    def __init__(self,num, base, ndla = 1000, numlos=5000, thresh=10**20.3, savefile="rand_spectra_DLA.hdf5", elem="H", ion=1, Tscale=1, **kwargs):
+    def __init__(self,num, base, ndla = 1000, numlos=5000, thresh=10**20.3, savefile="rand_spectra_DLA.hdf5", elem="H", ion=1, set_T0=None, set_gamma=None, **kwargs):
         #Load halos to push lines through them
-        f = absn.AbstractSnapshotFactory(num, base, Tscale)
+        f = absn.AbstractSnapshotFactory(num, base, Tscale=1, gammascale=1)
         self.box = f.get_header_attr("BoxSize")
         del f
         self.NumLos = numlos
@@ -21,7 +21,7 @@ class RandSpectra(spectra.Spectra):
         #Re-seed for repeatability
         np.random.seed(23)
         cofm = self.get_cofm()
-        spectra.Spectra.__init__(self,num, base, cofm, axis, savefile=savefile,reload_file=True, load_halo=False, Tscale=Tscale, **kwargs)
+        spectra.Spectra.__init__(self,num, base, cofm, axis, savefile=savefile,reload_file=True, load_halo=False, set_T0=set_T0, set_gamma=set_gamma, **kwargs)
 
         if np.size(thresh) > 1 or thresh > 0:
             self.replace_not_DLA(ndla, thresh, elem=elem, ion=ion)
