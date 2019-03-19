@@ -14,7 +14,6 @@ from .gas_properties import GasProperties
 import matplotlib.pyplot as plt
 import os
 from matplotlib.colors import LogNorm
-import bigfile
 
 def mean_density(hub, redshift, omegab=0.0465):
     """Get mean gas density at some redshift."""
@@ -109,9 +108,9 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
 def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     Nbins=1000 ## Number of bins along each axis
     maxOverDensity=0.5 ## Maximum overdensity to use for T_0 and gamma plot
-    snap=str(num).rjust(3,'0')
-    snapshot=os.path.join(base, "PART_"+snap)
-    ## Factores required to calculate temperature
+    #snap=str(num).rjust(3,'0')
+    #snapshot=os.path.join(base, "PART_"+snap)
+    ## Factors required to calculate temperature
     gamma=5./3
     hy_mass=0.76
     protonmass=1.67262178e-24 # proton mass in g
@@ -119,25 +118,24 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     UnitVelocity_in_cm_per_s=1e5
     UnitInternalEnergy_in_cgs = UnitVelocity_in_cm_per_s**2
 
-    f = bigfile.File(snapshot)
-    ## Get simulation params from header
-    boxSize=(f["Header"].attrs["BoxSize"][0])/1000
-    z=(1/f["Header"].attrs["Time"][0])-1
-    NPart=round((f["Header"].attrs["TotNumPartInit"][0])**0.33333333)
-    om_b=f["Header"].attrs["OmegaBaryon"]
+    snap=absn.AbstractSnapshotFactory(num, base, Tscale, gammascale)
+
+    z = 1./snap.get_header_attr("Time") - 1
+    hubble = snap.get_header_attr("HubbleParam")
+    om_b=snap.get_header_attr("OmegaBaryon")
 
     ## Calculate mean density
-    rho_crit=27.75e-9
+    rho_crit=27.75e-9 ## This might be different in Gadget3 snaps!
     mean_baryon_dens=rho_crit*om_b
 
     ## Gas = 0, DM = 1
-    density=bigfile.Dataset(f["0/"], ['Density'])
-    ienergy=bigfile.Dataset(f["0/"], ['InternalEnergy'])
-    nelec=bigfile.Dataset(f["0/"] , ['ElectronAbundance'])
+    density=snap.get_data(part_type, "Density", -1)
+    ienergy=snap.get_data(part_type, "InternalEnergy", -1)
+    nelec=snap.get_data(part_type, "ElectronAbundance", -1)
     ## Convert to array
-    density=density[:].astype(float)
-    ienergy=ienergy[:].astype(float)
-    nelec=nelec[:].astype(float)
+    #density=density[:].astype(float)
+    #ienergy=ienergy[:].astype(float)
+    #nelec=nelec[:].astype(float)
 
     ## Temp rescaling if required
     if Tscale!=1:
@@ -156,7 +154,6 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     ## Now plot temperature density relation
     if plot==True:
         plt.figure()
-        plt.title("z=%.1f, box=%.1f Mpc/h, Npart=%d" % (z,boxSize,NPart))
         plt.xlabel(r"$\mathrm{log}_{10}(\rho_b/\bar{\rho}_b)$")
         plt.ylabel(r"$\mathrm{log}_{10}$ Temperature (K)")
 
