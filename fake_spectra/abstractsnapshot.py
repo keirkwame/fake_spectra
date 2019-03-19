@@ -133,7 +133,11 @@ class AbstractSnapshot(object):
         #μ is 1 / (mean no. molecules per unit atomic weight) calculated in loop.
         #Internal energy units are 10^-10 erg/g
         if units is None:
-            units = self.get_units()
+            try:
+                units = self.get_units()
+            except:
+                print("Units not found, using defaults")
+                units = unitsystem.UnitSystem()
         ienergy = self.get_data(part_type, "InternalEnergy", segment=segment)*units.UnitInternalEnergy_in_cgs
         #Calculate temperature from internal energy and electron abundance
         nelec = self.get_data(part_type, "ElectronAbundance", segment=segment)
@@ -178,7 +182,6 @@ class HDF5Snapshot(AbstractSnapshot):
     def get_data(self, part_type, blockname, segment):
         """Get the data for a particular particle type.
            Segment: which file to load from."""
-        print("Is there anybody out there")
         if blockname in self.bigfile_to_hdf_map.keys():
             blockname = self.bigfile_to_hdf_map[blockname]
         if segment < 0:
@@ -188,21 +191,17 @@ class HDF5Snapshot(AbstractSnapshot):
                 return np.array(fhandle["PartType"+str(part_type)][blockname])
             return np.concatenate([_getone(ff) for ff in self._files])
         if self._handle_num != segment:
-            ## Temperature rescaling hack
-            if blockname=="InternalEnergy":
-                ## Rescale IE for temperature rescaling hack
-                ie=np.array(self._f_handle["PartType"+str(part_type)][blockname])
-                if self.Tscale!=1:
-                    print("Rescaling temperature by: ", self.Tscale)
-                ie*=self.Tscale
-                if self.gammascale!=1:
-                    print("gamma rescaling not implemented for hdf5 snapshots!")
-                return ie
-            else:
-                self._f_handle.close()
-                self._f_handle = h5py.File(self._files[segment],'r')
-                self._handle_num = segment
-                return np.array(self._f_handle["PartType"+str(part_type)][blockname])
+            self._f_handle.close()
+            self._f_handle = h5py.File(self._files[segment],'r')
+            self._handle_num = segment
+        outArray=np.array(self._f_handle["PartType"+str(part_type)][blockname])
+        if blockname=="InternalEnergy":
+            outArray*=self.Tscale
+            if self.gammascale!=1:
+                dens=self.get_data(0,"Density",segment)
+                meanDens=self.get_omega_baryon()*27.75e-9
+                outArray*=(dens/meanDens)**(self.gammascale-1)
+        return np.array(self._f_handle["PartType"+str(part_type)][blockname])
 
     def get_npart(self):
         """Get the total number of particles in the snapshot."""

@@ -47,6 +47,7 @@ def fit_temp_dens_relation(logoverden, logT):
     if res[-1] <= 0:
         print(res[3])
     return 10**params[0], params[1] + 1
+
 '''
 def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=1, gammascale=1,printOutput=False):
     """Make a temperature density plot of neutral hydrogen or gas.
@@ -59,8 +60,6 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
         nhi - if True, plot neutral hydrogen, otherwise plot total gas density
         plot - if True, make a plot, otherwise just do the fit
     """
-    print(num)
-    print(base)
     snap = absn.AbstractSnapshotFactory(num, base, Tscale, gammascale)
 
     redshift = 1./snap.get_header_attr("Time") - 1
@@ -122,16 +121,16 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
 
     z = 1./snap.get_header_attr("Time") - 1
     hubble = snap.get_header_attr("HubbleParam")
-    om_b=snap.get_header_attr("OmegaBaryon")
+    om_b=snap.get_omega_baryon()
 
     ## Calculate mean density
     rho_crit=27.75e-9 ## This might be different in Gadget3 snaps!
     mean_baryon_dens=rho_crit*om_b
 
     ## Gas = 0, DM = 1
-    density=snap.get_data(part_type, "Density", -1)
-    ienergy=snap.get_data(part_type, "InternalEnergy", -1)
-    nelec=snap.get_data(part_type, "ElectronAbundance", -1)
+    density=snap.get_data(0, "Density", 0)
+    ienergy=snap.get_data(0, "InternalEnergy", 0)
+    nelec=snap.get_data(0, "ElectronAbundance", 0)
     ## Convert to array
     #density=density[:].astype(float)
     #ienergy=ienergy[:].astype(float)
@@ -182,5 +181,4 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
         plt.text(min(xedges)+0.1,max(yedges)-0.45,r"$\gamma=%.2f$" % (gamma_minus_one+1))
         plt.show("hold")
     return 10**logT0, gamma_minus_one+1
-
 
