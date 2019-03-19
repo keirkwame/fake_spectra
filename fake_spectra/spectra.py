@@ -116,40 +116,50 @@ class Spectra(object):
         ## Temperature rescaling - calculate Tscale and gammascale factors to pass rescale internal energies by
         self.set_T0=set_T0
         self.set_gamma=set_gamma
-        if (self.set_T0 != None) and (self.set_gamma != None):
-            print("Rescaling T0 and gamma")
-            T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
-            self.Tscale=self.set_T0/T_sim
-            self.gammascale=self.set_gamma/gamma_sim
-            print("Rescaling T_0 by ", self.Tscale)
-            print("Rescaling gamma by ", self.gammascale)
-            Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
-            if abs(self.Tscale-1)>0.2:
-                print("Warning! Rescaling temperatures by more than 20%")
-            print("Desired parameters: T0=", self.set_T0, " , gamma= ", self.set_gamma)
-            print("After rescaling: T0=", Tnow, " ,gamma=", gammanow)
-        elif self.set_T0 != None:
-            self.gammascale=1
-            T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
-            self.Tscale=self.set_T0/T_sim
-            print("Rescaling T_0 by ", self.Tscale)
-            if abs(self.Tscale-1)>0.2:
-                print("Warning! Rescaling temperatures by more than 20%")
-            Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
-            print("Desired T0=", self.set_T0)
-            print("After rescaling: T0=", Tnow)
-        elif self.set_gamma != None:
-            ## Do some gamma rescaling
-            self.Tscale=1
-            T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
-            self.gammascale=self.set_gamma/gamma_sim
-            print("Rescaling gamma by ", self.gammascale)
-            Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
-            print("Desired gamma =", self.set_gamma)
-            print("After rescaling: gamma=", gammanow)
-        else:
-            self.Tscale=1
-            self.gammascale=1
+        self.Tscale=1
+        self.gammascale=1
+        ## Only concerned with temperature rescaling if we are reloading skewers from snapshot, not from a saved file
+        if reload_file==True:
+            if (self.set_T0 != None) and (self.set_gamma != None):
+                print("Rescaling T0 and gamma")
+                T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
+                self.Tscale=self.set_T0/T_sim
+                self.gammascale=self.set_gamma/gamma_sim
+                print("Rescaling T_0 by ", self.Tscale)
+                print("Rescaling gamma by ", self.gammascale)
+                Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
+                if abs(self.Tscale-1)>0.2:
+                    print("Warning! Rescaling temperatures by more than 20%")
+                print("Desired parameters: T0=", self.set_T0, " , gamma= ", self.set_gamma)
+                print("After rescaling: T0=", Tnow, " ,gamma=", gammanow)
+                self.T0=Tnow
+                self.gamma=gammanow
+            elif self.set_T0 != None:
+                self.gammascale=1
+                T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
+                self.Tscale=self.set_T0/T_sim
+                print("Rescaling T_0 by ", self.Tscale)
+                if abs(self.Tscale-1)>0.2:
+                    print("Warning! Rescaling temperatures by more than 20%")
+                Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
+                print("Desired T0=", self.set_T0)
+                print("After rescaling: T0=", Tnow)
+                self.T0=Tnow
+                self.gamma=gammanow
+            elif self.set_gamma != None:
+                self.Tscale=1
+                T_sim,gamma_sim=td.fit_td_rel_plot(num,base,plot=False)
+                self.gammascale=self.set_gamma/gamma_sim
+                print("Rescaling gamma by ", self.gammascale)
+                Tnow,gammanow=td.fit_td_rel_plot(num,base,plot=False,Tscale=self.Tscale,gammascale=self.gammascale)
+                print("Desired gamma =", self.set_gamma)
+                print("After rescaling: gamma=", gammanow)
+                self.T0=Tnow
+                self.gamma=gammanow
+            else:
+                T_sim,gamma_sim=td.fit_td_rel_plot(num,base)
+                self.T0=T_sim
+                self.gamma=gamma_sim
 
         try:
             if load_snapshot:
@@ -276,6 +286,8 @@ class Spectra(object):
         grp.attrs["omegal"]=self.OmegaLambda
         grp.attrs["discarded"]=self.discarded
         grp.attrs["npart"]=self.npart
+        grp.attrs["T0"]=self.T0
+        grp.attrs["gamma"]=self.gamma
         grp = f.create_group("spectra")
         grp["cofm"]=self.cofm
         grp["axis"]=self.axis
@@ -384,6 +396,11 @@ class Spectra(object):
         self.npart = np.array(grid_file.attrs["npart"])
         self.box=grid_file.attrs["box"]
         self.discarded=grid_file.attrs["discarded"]
+        try:
+            self.T0=grid_file.attrs["T0"]
+            self.gamma=grid_file.attrs["gamma"]
+        except:
+            print("Save file has no temperature data saved!")
         grp = f["colden"]
         for elem in grp.keys():
             for ion in grp[elem].keys():

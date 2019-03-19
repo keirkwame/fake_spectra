@@ -167,11 +167,11 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     tempFit=np.array([])
     while xedges[aa]<=maxOverDensity:
         ## Get argument of median
-        argmed=(np.abs(Data2D[aa][:] - np.median(np.trim_zeros(Data2D[aa][:])))).argmin()
-        tempFit=np.append(tempFit,yedges[argmed])   # Median fit
-        print("Median arg=", argmed)
-        print("Mode arg=", np.argmax(Data2D[aa][:]))
-        #tempFit=np.append(tempFit,yedges[np.argmax(Data2D[aa][:])])   # Mode fit
+        #argmed=(np.abs(Data2D[aa][:] - np.median(np.trim_zeros(Data2D[aa][:])))).argmin()
+        #tempFit=np.append(tempFit,yedges[argmed])   # Median fit
+        #print("Median arg=", argmed)
+        #print("Mode arg=", np.argmax(Data2D[aa][:]))
+        tempFit=np.append(tempFit,yedges[np.argmax(Data2D[aa][:])])   # Mode fit
         aa=aa+1
     gamma_minus_one,logT0=np.polyfit(xedges[:aa],tempFit,deg=1)
     #print("T0=", 10**logT0, "\n gamma", gamma_minus_one+1)
