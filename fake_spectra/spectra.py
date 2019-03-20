@@ -130,8 +130,8 @@ class Spectra(object):
                 Tnow,gammanow=td.fit_td_rel_plot(num,base,Tscale=self.Tscale,gammascale=self.gammascale)
                 if abs(self.Tscale-1)>0.2:
                     print("Warning! Rescaling temperatures by more than 20%")
-                print("Desired parameters: T0=", self.set_T0, " , gamma= ", self.set_gamma)
-                print("After rescaling: T0=", Tnow, " ,gamma=", gammanow)
+                print("Desired parameters: T0=", self.set_T0, ", gamma=", self.set_gamma)
+                print("After rescaling: T0=", Tnow,", gamma=", gammanow)
                 self.T0=Tnow
                 self.gamma=gammanow
             elif self.set_T0 != None:

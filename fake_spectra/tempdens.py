@@ -104,6 +104,14 @@ def fit_td_rel_plot(num, base, nhi=True, nbins=500, gas="raw", plot=True,Tscale=
         plt.tight_layout()
     return T0, gamma
 '''
+def MedianArg(data_column):
+    bb=0
+    cc=0
+    while bb < sum(data_column)/2:
+        bb+=data_column[cc]
+        cc+=1
+    return cc-1
+
 def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     Nbins=1000 ## Number of bins along each axis
     maxOverDensity=0.5 ## Maximum overdensity to use for T_0 and gamma plot
@@ -162,12 +170,9 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
     aa=0
     tempFit=np.array([])
     while xedges[aa]<=maxOverDensity:
-        ## Get argument of median
-        #argmed=(np.abs(Data2D[aa][:] - np.median(np.trim_zeros(Data2D[aa][:])))).argmin()
-        #tempFit=np.append(tempFit,yedges[argmed])   # Median fit
-        #print("Median arg=", argmed)
-        #print("Mode arg=", np.argmax(Data2D[aa][:]))
-        tempFit=np.append(tempFit,yedges[np.argmax(Data2D[aa][:])])   # Mode fit
+        tempFit=np.append(tempFit,yedges[np.argmax(Data2D[aa][:])])   ## Mode fit
+        #argmed=MedianArg(Data2D[aa][:])
+        #tempFit=np.append(tempFit,yedges[argmed])   ## Median fit
         aa=aa+1
     gamma_minus_one,logT0=np.polyfit(xedges[:aa],tempFit,deg=1)
     #print("T0=", 10**logT0, "\n gamma", gamma_minus_one+1)
@@ -181,4 +186,3 @@ def fit_td_rel_plot(num, base, Tscale=1, gammascale=1, plot=False):
         plt.text(min(xedges)+0.1,max(yedges)-0.45,r"$\gamma=%.2f$" % (gamma_minus_one+1))
         plt.show("hold")
     return 10**logT0, gamma_minus_one+1
-
