@@ -48,6 +48,10 @@ try:
 except NameError:
     xrange = range
 
+def tau_effective_Boera(redshift):
+    """Redshift model for the effective optical depth presented in Boera+2018."""
+    return 1.4e-3 * ((1. + redshift) ** 4.)
+
 class Spectra(object):
     """Class to interpolate particle densities along a line of sight and calculate their absorption
         Arguments:
@@ -763,7 +767,7 @@ class Spectra(object):
         phys = self.dvbin/self.velfac*self.rscale
         return colden/phys
 
-    def get_tau(self, elem, ion,line, number = -1, force_recompute=False, noise=True):
+    def get_tau(self, elem, ion,line, number = -1, force_recompute=False, noise=True, add_z_evolution=False):
         """Get the optical depth in each pixel along the sightline for a given line."""
         try:
             if force_recompute:
@@ -783,8 +787,23 @@ class Spectra(object):
             if np.any(corrflux <= 0):
                 raise Exception
             tau = - np.log(corrflux)
+        if add_z_evolution:
+            tau = self.add_tau_z_evolution(tau)
         if noise and self.snr > 0:
             tau = self.add_noise(self.snr, tau, number)
+        return tau
+
+    def get_rolling_mean(self, tau):
+        """Get the rolling mean of the given optical depths."""
+        pass
+
+    def add_tau_z_evolution(self, tau, tau_effective_model=tau_effective_Boera):
+        """Correct optical depths for specified redshift evolution."""
+        tau_mean = np.mean(tau)
+        delta_z = self.vmax / 3.e+5
+        z_vector = np.linspace(start=0, stop=delta_z, num=tau.shape[-1] + 1)[:-1]
+        z_vector += (self.red - (delta_z / 2.))
+        tau *= tau_effective_model(z_vector)[np.newaxis, :] / tau_mean
         return tau
 
     def _vel_single_file(self,fn, elem, ion):
