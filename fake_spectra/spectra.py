@@ -22,6 +22,7 @@ from __future__ import print_function
 import os
 import os.path as path
 import shutil
+import copy as cp
 import numpy as np
 import h5py
 
@@ -800,14 +801,30 @@ class Spectra(object):
     def add_tau_z_evolution(self, tau, tau_effective_model=tau_effective_Boera):
         """Correct optical depths for specified redshift evolution."""
         #tau_mean = np.mean(tau)
-        delta_z = self.vmax / 3.e+5
+        delta_z = self.vmax * (1. + self.red) / 3.e+5
         z_vector = np.linspace(start=0, stop=delta_z, num=tau.shape[-1] + 1)[:-1]
         z_vector += (self.red - (delta_z / 2.))
-        flux = np.exp(-1. * tau)
-        flux_mean = np.mean(flux)
-        flux *= np.exp(-1. * tau_effective_model(z_vector)[np.newaxis, :]) / flux_mean
+
+        tau_scale = fstat.mean_flux(tau, tau_effective_model(self.red))
+        print('tau_scale =', tau_scale)
+        n_slices = 10
+        n_elems = tau.shape[1] // n_slices
+        for i in range(n_slices):
+            if i < (n_slices - 1):
+                idx_end = (i + 1) * n_elems
+            else:
+                idx_end = -1
+            idx_central = int((i + 0.5) * n_elems)
+            tau_slice = cp.deepcopy(tau[:, (i * n_elems): idx_end])
+            tau_scale = fstat.mean_flux(tau_slice, tau_effective_model(z_vector[idx_central]))
+            print('i, tau_scale =', i, tau_scale)
+            tau[:, (i * n_elems): idx_end] *= tau_scale
+
+        #flux = np.exp(-1. * tau)
+        #flux_mean = np.mean(flux)
+        #flux *= np.exp(-1. * tau_effective_model(z_vector)[np.newaxis, :]) / flux_mean
         #tau *= tau_effective_model(z_vector)[np.newaxis, :] / tau_mean
-        return -1. * np.log(flux)
+        return tau #-1. * np.log(flux)
 
     def _vel_single_file(self,fn, elem, ion):
         """Get the column density weighted interpolated velocity field for a single file"""
