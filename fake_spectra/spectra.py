@@ -805,7 +805,7 @@ class Spectra(object):
         z_vector = np.linspace(start=0, stop=delta_z, num=tau.shape[-1] + 1)[:-1]
         z_vector += (self.red - (delta_z / 2.))
 
-        tau_scale = fstat.mean_flux(tau, tau_effective_model(self.red))
+        tau_scale = fstat.mean_flux(tau, np.exp(-1. * tau_effective_model(self.red)))
         print('tau_scale =', tau_scale)
         n_slices = 10
         n_elems = tau.shape[1] // n_slices
@@ -816,7 +816,7 @@ class Spectra(object):
                 idx_end = -1
             idx_central = int((i + 0.5) * n_elems)
             tau_slice = cp.deepcopy(tau[:, (i * n_elems): idx_end])
-            tau_scale = fstat.mean_flux(tau_slice, tau_effective_model(z_vector[idx_central]))
+            tau_scale = fstat.mean_flux(tau_slice, np.exp(-1. * tau_effective_model(z_vector[idx_central])))
             print('i, tau_scale =', i, tau_scale)
             tau[:, (i * n_elems): idx_end] *= tau_scale
 
@@ -965,7 +965,7 @@ class Spectra(object):
         it can be a fixed spacing in the hubble flow.
 
         So we have f(N) = d n_abs/ dN dX
-        and n_DLA(N) = number of absorbers per sightline in this column density bin.
+        and n_DLA(N) = number of absorbers per sightline in this column density b0in.
                      1 sightline is defined to be one grid cell.
                      So this is (cells in this bins) / (no. of cells)
         ie, f(N) = n_abs / ΔN / ΔX
