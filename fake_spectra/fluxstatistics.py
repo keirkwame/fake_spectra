@@ -80,6 +80,7 @@ def flux_power(tau, vmax, spec_res = 8, mean_flux_desired=None, window=True):
         #print("rescaled: ",scale,"frac: ",np.sum(tau>1)/np.sum(tau>0))
     else:
         mean_flux_desired = np.mean(np.exp(-tau))
+    print('Effective optical depth =', np.log(np.mean(np.exp(-tau))))
     (nspec, npix) = np.shape(tau)
     mean_flux_power = np.zeros(npix//2+1, dtype=tau.dtype)
     for i in range(10):
