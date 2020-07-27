@@ -807,6 +807,7 @@ class Spectra(object):
 
         tau_scale = fstat.mean_flux(tau, np.exp(-1. * tau_effective_model(self.red)))
         print('tau_scale =', tau_scale)
+        print('Original mean flux =', np.mean(np.exp(-1. * tau)))
         n_slices = 10
         n_elems = tau.shape[1] // n_slices
         for i in range(n_slices):
@@ -820,6 +821,7 @@ class Spectra(object):
             print('i, tau_scale =', i, tau_scale)
             tau[:, (i * n_elems): idx_end] *= tau_scale
 
+        print('New mean flux =', np.mean(np.exp(-1. * tau)))
         #flux = np.exp(-1. * tau)
         #flux_mean = np.mean(flux)
         #flux *= np.exp(-1. * tau_effective_model(z_vector)[np.newaxis, :]) / flux_mean
